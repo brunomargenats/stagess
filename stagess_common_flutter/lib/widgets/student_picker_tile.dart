@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:stagess_common/models/persons/student.dart';
 import 'package:stagess_common_flutter/providers/students_provider.dart';
@@ -72,6 +73,24 @@ class StudentPickerTile extends StatelessWidget {
     }
     students.sort((a, b) => a.lastName.compareTo(b.lastName));
 
+    void commitSelectionFromText(String? rawText) {
+      final matchedStudent = students.firstWhereOrNull(
+        (student) =>
+            student.fullName.trim().toLowerCase() ==
+            (rawText?.trim().toLowerCase() ?? ''),
+      );
+      if (matchedStudent == null) {
+        controller._selection = Student.empty;
+        state.didChange(Student.empty);
+        return;
+      }
+
+      final hasChangedSelection = controller.student?.id != matchedStudent.id;
+      controller.student = matchedStudent;
+      state.didChange(matchedStudent);
+      if (hasChangedSelection && onSelected != null) onSelected!(matchedStudent);
+    }
+
     return Autocomplete<Student>(
       initialValue: TextEditingValue(
         text: controller._selection?.fullName ?? '',
@@ -104,29 +123,44 @@ class StudentPickerTile extends StatelessWidget {
       fieldViewBuilder: (_, textController, focusNode, onSubmitted) {
         controller._textController = textController;
 
-        return TextFormField(
-          controller: controller._textController,
-          focusNode: focusNode,
-          readOnly: false,
-          enabled: editMode,
-          style: const TextStyle(color: Colors.black),
-          onFieldSubmitted: (_) => onSubmitted(),
-          validator: (value) => isMandatory && (value?.isEmpty ?? true)
-              ? 'Sélectionner un·e élève'
-              : null,
-          decoration: InputDecoration(
-            labelText:
-                title ?? '${isMandatory ? '* ' : ''}Sélectionner un·e élève',
-            labelStyle: const TextStyle(color: Colors.black),
-            errorText: state.errorText,
-            suffixIcon: IconButton(
-              onPressed: () {
-                if (focusNode.hasFocus) focusNode.previousFocus();
-                controller.student = Student.empty;
-                textController.clear();
-                state.didChange(Student.empty);
-              },
-              icon: const Icon(Icons.clear),
+        return Focus(
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) commitSelectionFromText(textController.text);
+          },
+          child: TextFormField(
+            controller: controller._textController,
+            focusNode: focusNode,
+            readOnly: false,
+            enabled: editMode,
+            style: const TextStyle(color: Colors.black),
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            onFieldSubmitted: (_) => onSubmitted(),
+            validator: (value) {
+              if (isMandatory && (value?.trim().isEmpty ?? true)) {
+                return 'Sélectionner un·e élève';
+              }
+
+              return validateExactAutocompleteOption<Student>(
+                value: value,
+                options: students,
+                optionToString: (student) => student.fullName,
+                errorMessage: 'Sélectionner un·e élève',
+              );
+            },
+            decoration: InputDecoration(
+              labelText:
+                  title ?? '${isMandatory ? '* ' : ''}Sélectionner un·e élève',
+              labelStyle: const TextStyle(color: Colors.black),
+              errorText: state.errorText,
+              suffixIcon: IconButton(
+                onPressed: () {
+                  if (focusNode.hasFocus) focusNode.previousFocus();
+                  controller.student = Student.empty;
+                  textController.clear();
+                  state.didChange(Student.empty);
+                },
+                icon: const Icon(Icons.clear),
+              ),
             ),
           ),
         );

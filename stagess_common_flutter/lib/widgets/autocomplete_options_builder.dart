@@ -1,5 +1,25 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+
+String? validateExactAutocompleteOption<T extends Object>({
+  required String? value,
+  required Iterable<T> options,
+  required String Function(T) optionToString,
+  required String errorMessage,
+}) {
+  final normalizedText = value?.trim();
+  if (normalizedText == null || normalizedText.isEmpty) return null;
+
+  final hasExactMatch = options.firstWhereOrNull(
+        (option) =>
+            optionToString(option).trim().toLowerCase() ==
+            normalizedText.toLowerCase(),
+      ) !=
+      null;
+
+  return hasExactMatch ? null : errorMessage;
+}
 
 class OptionsBuilderForAutocomplete<T extends Object> extends StatelessWidget {
   const OptionsBuilderForAutocomplete({
