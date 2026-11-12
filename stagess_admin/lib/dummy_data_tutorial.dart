@@ -41,7 +41,6 @@ import 'package:stagess_common_flutter/providers/internships_provider.dart';
 import 'package:stagess_common_flutter/providers/school_boards_provider.dart';
 import 'package:stagess_common_flutter/providers/students_provider.dart';
 import 'package:stagess_common_flutter/providers/teachers_provider.dart';
-import 'package:stagess_common_flutter/widgets/checkbox_with_other.dart';
 
 Future<void> resetDummyDataTutorial(BuildContext context) async {
   // Show a waiting dialog
@@ -1511,14 +1510,6 @@ Future<void> _addDummyEnterprises(
           ),
         ],
       ),
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [
-          'Ne pas avoir peur de travailler dans le froid',
-          PreInternshipRequestTypes.soloInterview.index.toString(),
-        ],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -1540,13 +1531,6 @@ Future<void> _addDummyEnterprises(
               'Une élève s\'est fait mal au dos en soulevant des boites de lessive',
             ),
           ],
-        ),
-        minimumAge: 15,
-        preInternshipRequests: PreInternshipRequests.fromStrings(
-          [
-            'Savoir manoeuvrer un transpalette électrique',
-          ],
-          notApplicableTag: CheckboxWithOther.notApplicableTag,
         ),
         reservedForId: '',
         photos: [
@@ -1621,11 +1605,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[0].specializations[7],
       positionsOffered: {schoolAId: 3, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: teacherB1Id,
     ),
   );
@@ -1685,14 +1664,6 @@ Future<void> _addDummyEnterprises(
           )
         ],
       ),
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [
-          PreInternshipRequestTypes.soloInterview.toString(),
-          'Faire le ménage',
-        ],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: teacherA1Id,
     ),
   );
@@ -1750,11 +1721,6 @@ Future<void> _addDummyEnterprises(
           date: DateTime.now(),
         )
       ]),
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -1805,11 +1771,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[2].specializations[9],
       positionsOffered: {schoolAId: 2, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -1861,11 +1822,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[2].specializations[7],
       positionsOffered: {schoolAId: 1, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -1917,11 +1873,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[0].specializations[7],
       positionsOffered: {schoolAId: 2, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -1973,11 +1924,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[2].specializations[14],
       positionsOffered: {schoolAId: 1, schoolBId: 5, schoolCId: 1},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -2024,11 +1970,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[0].specializations[7],
       positionsOffered: {schoolAId: 3, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -2084,11 +2025,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[1].specializations[2],
       positionsOffered: {schoolAId: 1, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );
@@ -2138,11 +2074,6 @@ Future<void> _addDummyEnterprises(
           .ActivitySectorsService.activitySectors[1].specializations[2],
       positionsOffered: {schoolAId: 1, schoolBId: 5},
       incidents: Incidents.empty,
-      minimumAge: 15,
-      preInternshipRequests: PreInternshipRequests.fromStrings(
-        [],
-        notApplicableTag: CheckboxWithOther.notApplicableTag,
-      ),
       reservedForId: '',
     ),
   );

@@ -479,11 +479,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
               idNameToDataTable: 'job_id',
               fieldsToFetch: ['comment', 'user_id', 'date']),
           sqlInterface.selectSubquery(
-              dataTableName: 'enterprise_job_pre_internship_requests',
-              asName: 'pre_internship_requests',
-              idNameToDataTable: 'job_id',
-              fieldsToFetch: ['id', 'other', 'is_applicable']),
-          sqlInterface.selectSubquery(
               dataTableName: 'enterprise_job_incidents',
               asName: 'incidents',
               idNameToDataTable: 'job_id',
@@ -523,22 +518,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
                     })
                 .toList() ??
             [];
-        jobs[job['id']]['pre_internship_requests'] =
-            ((job['pre_internship_requests'] as List?)?.first as Map?) ?? {};
-        jobs[job['id']]['pre_internship_requests']['is_applicable'] =
-            jobs[job['id']]['pre_internship_requests']['is_applicable'] == 1;
-        jobs[job['id']]['pre_internship_requests']['requests'] =
-            (await sqlInterface.performSelectQuery(
-                  user: user,
-                  tableName: 'enterprise_job_pre_internship_request_items',
-                  filters: {
-                    'internship_request_id': job['pre_internship_requests']
-                        ['id']
-                  },
-                ) as List?)
-                    ?.map((e) => e['request'] as int)
-                    .toList() ??
-                [];
         final incidents = job['incidents'] as List? ?? [];
         jobs[job['id']]['incidents'] = incidents.isEmpty
             ? null
@@ -690,31 +669,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
     await Future.wait(toWait);
   }
 
-  Future<void> _insertJobPreintershipRequests(
-      PreInternshipRequests requests, String jobId) async {
-    // Insert pre-internship requests for the job
-    final preInternshipRequests = requests.serialize();
-    await sqlInterface.performInsertQuery(
-        tableName: 'enterprise_job_pre_internship_requests',
-        data: {
-          'id': preInternshipRequests['id'],
-          'job_id': jobId.serialize(),
-          'other': preInternshipRequests['other'],
-          'is_applicable': preInternshipRequests['is_applicable'],
-        });
-
-    final toWait = <Future>[];
-    for (final request in (preInternshipRequests['requests'] as List)) {
-      toWait.add(sqlInterface.performInsertQuery(
-          tableName: 'enterprise_job_pre_internship_request_items',
-          data: {
-            'internship_request_id': preInternshipRequests['id'],
-            'request': request,
-          }));
-    }
-    await Future.wait(toWait);
-  }
-
   Future<void> _insertJobIncidents(Incidents incidents, String jobId) async {
     final serialized = incidents.serialize();
     final toWait = <Future>[];
@@ -741,7 +695,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
       'version': Job.currentVersion.serialize(),
       'enterprise_id': enterpriseId.serialize(),
       'specialization_id': job.specialization.id.serialize(),
-      'minimum_age': job.minimumAge.serialize(),
       'reserved_for_id':
           job.reservedForId.isEmpty ? null : job.reservedForId.serialize(),
     });
@@ -751,8 +704,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
         .add(_insertPositionsOffered(job.positionsOffered, job.id.serialize()));
     toWait.add(_insertJobPhotos(job.photos, job.id.serialize()));
     toWait.add(_insertJobComments(job.comments, job.id.serialize()));
-    toWait.add(_insertJobPreintershipRequests(
-        job.preInternshipRequests, job.id.serialize()));
     toWait.add(_insertJobIncidents(job.incidents, job.id.serialize()));
 
     await Future.wait(toWait);
@@ -813,9 +764,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
         }
       }
 
-      if (differences.contains('minimum_age')) {
-        toUpdate['minimum_age'] = job.minimumAge.serialize();
-      }
       if (differences.contains('reserved_for_id')) {
         if (user.accessLevel < AccessLevel.schoolAdmin) {
           _logger.warning(
@@ -872,17 +820,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
         toWaitDeleted.add(sqlInterface.performDeleteQuery(
             tableName: 'enterprise_job_comments', filters: {'job_id': job.id}));
         toWait.add(_insertJobComments(job.comments, job.id.serialize()));
-      }
-
-      // Pre-internship requests would not be that hard to actually update, but
-      // is not so important, so we use the same trick of deleting and reinserting.
-      // It helps to keep the code simple and consistent and also helps for the items.
-      if (differences.contains('pre_internship_requests')) {
-        toWaitDeleted.add(sqlInterface.performDeleteQuery(
-            tableName: 'enterprise_job_pre_internship_requests',
-            filters: {'job_id': job.id}));
-        toWait.add(_insertJobPreintershipRequests(
-            job.preInternshipRequests, job.id.serialize()));
       }
 
       if (differences.contains('incidents')) {

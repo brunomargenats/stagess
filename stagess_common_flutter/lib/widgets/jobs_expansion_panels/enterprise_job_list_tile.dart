@@ -12,7 +12,6 @@ import 'package:stagess_common_flutter/providers/students_provider.dart';
 import 'package:stagess_common_flutter/providers/teachers_provider.dart';
 import 'package:stagess_common_flutter/widgets/animated_expanding_card.dart';
 import 'package:stagess_common_flutter/widgets/autocomplete_options_builder.dart';
-import 'package:stagess_common_flutter/widgets/checkbox_with_other.dart';
 import 'package:stagess_common_flutter/widgets/entity_picker_tile.dart';
 import 'package:stagess_common_flutter/widgets/incidents_expansion_panel.dart';
 import 'package:stagess_common_flutter/widgets/jobs_expansion_panels/comments_expansion_panel.dart';
@@ -31,9 +30,6 @@ class EnterpriseJobListController {
   final List<Specialization>? _specializationsWhiteList;
   final List<Specialization>? _specializationBlacklist;
 
-  late final _minimumAgeController = TextEditingController(
-    text: _job.minimumAge == 0 ? '' : _job.minimumAge.toString(),
-  );
   late final Map<String, int> _positionsOffered = _job.positionsOffered.map(
     (key, value) => MapEntry(key, value),
   );
@@ -48,8 +44,6 @@ class EnterpriseJobListController {
   final Map<String, int> _positionsOccupied = {};
   Map<String, int> get positionsOccupied =>
       enterpriseStatus == EnterpriseStatus.active ? _positionsOccupied : {};
-
-  late var _preInternshipRequests = _job.preInternshipRequests;
 
   final EntityPickerController? _reservedForPickerController;
   String? get _reservedForSchoolId =>
@@ -93,17 +87,10 @@ class EnterpriseJobListController {
 
   Job get job => _job.copyWith(
         specialization: _specialization,
-        minimumAge: int.tryParse(_minimumAgeController.text),
-        positionsOffered: _realPositionsOffered(keepActiveStatus: false),
-        preInternshipRequests: _preInternshipRequests,
         reservedForId: _reservedForPickerController == null
             ? _job.reservedForId
             : (_reservedForPickerController?.selectionId ?? ''),
       );
-
-  void dispose() {
-    _minimumAgeController.dispose();
-  }
 }
 
 class EnterpriseJobListTile extends StatefulWidget {
@@ -165,20 +152,6 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
   void dispose() {
     widget.controller._reservedForPickerController?.removeListener(_refresh);
     super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant EnterpriseJobListTile oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _preInternshipRequestsController.forceSetIfDifferent(
-      comparator: CheckboxWithOtherController(
-        elements: PreInternshipRequestTypes.values,
-        initialValues: [
-          ...job.preInternshipRequests.requests.map((e) => e.toString()),
-          job.preInternshipRequests.other ?? '',
-        ],
-      ),
-    );
   }
 
   @override
@@ -271,7 +244,6 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
-                    child: _buildMinimumAge(),
                   ),
                   const SizedBox(height: 8),
                   if (!widget.showHeader)
@@ -290,7 +262,6 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
                         const SizedBox(height: 8),
                       ],
                     ),
-                  _buildPrerequisites(),
                   if (widget.showExtended)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
@@ -391,26 +362,6 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
     );
   }
 
-  Widget _buildMinimumAge() {
-    return TextFormField(
-      controller: widget.controller._minimumAgeController,
-      enabled: widget.editMode,
-      validator: (value) {
-        final current = int.tryParse(value!);
-        if (current == null) return 'Préciser';
-        if (current < 15 || current > 30) return 'Minimum 15 ans';
-        return null;
-      },
-      decoration: const InputDecoration(
-        labelText: '* Âge minimum des stagiaires (ans)',
-        labelStyle: TextStyle(color: Colors.black),
-      ),
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: (widget.editMode ? null : TextStyle(color: Colors.black)),
-    );
-  }
-
   int _positionOffered(String schoolId) {
     return widget.controller
             ._realPositionsOffered(keepActiveStatus: true)[schoolId] ??
@@ -504,30 +455,6 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
     );
   }
 
-  late final _preInternshipRequestKey = ValueKey(
-    '${job.id}_pre_internship_requests',
-  );
-  late final _preInternshipRequestsController = CheckboxWithOtherController(
-    elements: PreInternshipRequestTypes.values,
-    initialValues: [
-      ...job.preInternshipRequests.requests.map((e) => e.toString()),
-      job.preInternshipRequests.other ?? '',
-    ],
-  );
-
-  Widget _buildPrerequisites() {
-    return BuildPrerequisitesCheckboxes(
-      checkboxKey: _preInternshipRequestKey,
-      controller: _preInternshipRequestsController,
-      enabled: widget.editMode,
-      onChanged: (values) {
-        widget.controller._preInternshipRequests =
-            PreInternshipRequests.fromStrings(values,
-                notApplicableTag: CheckboxWithOther.notApplicableTag);
-      },
-    );
-  }
-
   Widget _buildReservedFor() {
     return Padding(
       padding: const EdgeInsets.only(right: 36.0),
@@ -578,42 +505,6 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
         CommentsExpansionPanel(
             enterpriseId: widget.controller.enterpriseId, job: job)
       ],
-    );
-  }
-}
-
-class BuildPrerequisitesCheckboxes extends StatelessWidget {
-  const BuildPrerequisitesCheckboxes({
-    super.key,
-    required this.controller,
-    required this.checkboxKey,
-    this.enabled = true,
-    this.onChanged,
-    this.hideTitle = false,
-  });
-
-  final Key checkboxKey;
-  final CheckboxWithOtherController<PreInternshipRequestTypes> controller;
-  final bool enabled;
-  final Function(List<String>)? onChanged;
-  final bool hideTitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return CheckboxWithOther<PreInternshipRequestTypes>(
-      key: checkboxKey,
-      controller: controller,
-      title: hideTitle
-          ? null
-          : 'Exigences de l\'entreprise avant d\'accueillir des élèves en stage:',
-      titleStyle: Theme.of(context).textTheme.bodyLarge,
-      otherMaxLength: 500,
-      enabled: enabled,
-      onOptionSelected: (_) {
-        if (onChanged != null) {
-          onChanged!(controller.values);
-        }
-      },
     );
   }
 }

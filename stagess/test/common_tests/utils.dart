@@ -183,15 +183,6 @@ SstEvaluation dummySstEvaluation({String id = 'sstEvaluationId'}) =>
       date: DateTime(2000, 1, 1),
     );
 
-PreInternshipRequests dummyPreInternshipRequests(
-        {String id = 'preInternshipRequestsId'}) =>
-    PreInternshipRequests(
-      id: id,
-      requests: [PreInternshipRequestTypes.judiciaryBackgroundCheck],
-      other: 'Manger de la poutine',
-      isApplicable: true,
-    );
-
 Photo dummyPhoto() => Photo(
       id: 'photoId',
       bytes: Uint8List.fromList(List.generate(100, (index) => index % 256)),
@@ -220,9 +211,6 @@ Job dummyJob({
           ActivitySectorsService.activitySectors[2].specializations[9],
       positionsOffered: {'school_id': 2},
       incidents: dummyIncidents(id: incidentsId ?? id),
-      minimumAge: 12,
-      preInternshipRequests:
-          dummyPreInternshipRequests(id: preInternshipId ?? id),
       reservedForId: '',
     );
 

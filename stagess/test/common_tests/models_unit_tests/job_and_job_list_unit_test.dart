@@ -41,8 +41,6 @@ void main() {
       expect(jobSame.id, job.id);
       expect(jobSame.specialization, job.specialization);
       expect(jobSame.positionsOffered, job.positionsOffered);
-      expect(jobSame.minimumAge, job.minimumAge);
-      expect(jobSame.preInternshipRequests, job.preInternshipRequests);
       expect(jobSame.photos, job.photos);
       expect(jobSame.incidents, job.incidents);
       expect(jobSame.comments, job.comments);
@@ -52,10 +50,6 @@ void main() {
         specialization:
             ActivitySectorsService.activitySectors[2].specializations[8],
         positionsOffered: {'school_id': 2},
-        minimumAge: 12,
-        preInternshipRequests: dummyPreInternshipRequests(
-          id: 'newPreInternshipId',
-        ),
         photos: [dummyPhoto()],
         incidents: dummyIncidents(id: 'newIncidentsId'),
         comments: [dummyJobComment()],
@@ -67,13 +61,10 @@ void main() {
         ActivitySectorsService.activitySectors[2].specializations[8].id,
       );
       expect(jobDifferent.positionsOffered, {'school_id': 2});
-      expect(jobDifferent.minimumAge, 12);
-      expect(jobDifferent.preInternshipRequests.id, 'newPreInternshipId');
       expect(jobDifferent.photos, isA<List<Photo>>());
       expect(jobDifferent.photos.length, 1);
       expect(jobDifferent.photos[0].id, 'photoId');
       expect(jobDifferent.incidents.id, 'newIncidentsId');
-      expect(jobDifferent.preInternshipRequests.id, 'newPreInternshipId');
       expect(jobDifferent.comments, isA<List<JobComment>>());
       expect(jobDifferent.comments.length, 1);
       expect(jobDifferent.comments[0].id, 'jobCommentId');
@@ -99,8 +90,6 @@ void main() {
         'version': Job.currentVersion,
         'specialization_id': job.specialization.id,
         'positions_offered': job.positionsOffered,
-        'minimum_age': job.minimumAge,
-        'pre_internship_requests': job.preInternshipRequests.serialize(),
         'photos': job.photos.serialize(),
         'incidents': job.incidents.serialize(),
         'comments': job.comments,
@@ -110,11 +99,6 @@ void main() {
       expect(deserialized.id, job.id);
       expect(deserialized.specialization.id, job.specialization.id);
       expect(deserialized.positionsOffered, job.positionsOffered);
-      expect(deserialized.minimumAge, job.minimumAge);
-      expect(
-        deserialized.preInternshipRequests.id,
-        job.preInternshipRequests.id,
-      );
       expect(deserialized.photos, job.photos);
       expect(deserialized.incidents.id, job.incidents.id);
       expect(deserialized.comments, job.comments);
@@ -123,8 +107,6 @@ void main() {
       final emptyDeserialized = Job.fromSerialized({'id': 'emptyId'});
       expect(emptyDeserialized.id, 'emptyId');
       expect(emptyDeserialized.positionsOffered, {});
-      expect(emptyDeserialized.minimumAge, 0);
-      expect(emptyDeserialized.preInternshipRequests.id, isNotNull);
       expect(emptyDeserialized.photos, []);
       expect(emptyDeserialized.incidents.id, isNotNull);
       expect(emptyDeserialized.comments, []);
@@ -143,8 +125,6 @@ void main() {
             'version': Job.currentVersion,
             'specialization_id': e.specialization.id,
             'positions_offered': e.positionsOffered,
-            'minimum_age': e.minimumAge,
-            'pre_internship_requests': e.preInternshipRequests.serialize(),
             'photos': e.photos,
             'incidents': e.incidents.serialize(),
             'comments': e.comments,
@@ -156,11 +136,6 @@ void main() {
       expect(deserialized[0].specialization.id, jobList[0].specialization.id);
       expect(deserialized[0].positionsOffered, jobList[0].positionsOffered);
       expect(deserialized[0].incidents.id, jobList[0].incidents.id);
-      expect(deserialized[0].minimumAge, jobList[0].minimumAge);
-      expect(
-        deserialized[0].preInternshipRequests.id,
-        jobList[0].preInternshipRequests.id,
-      );
 
       // Test for empty deserialize to make sure it doesn't crash
       final emptyDeserialized = JobList.fromSerialized({});

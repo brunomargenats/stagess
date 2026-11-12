@@ -1,5 +1,4 @@
 import 'package:enhanced_containers_foundation/enhanced_containers_foundation.dart';
-import 'package:stagess_common/exceptions.dart';
 import 'package:stagess_common/models/enterprises/job_comment.dart';
 import 'package:stagess_common/models/generic/fetchable_fields.dart';
 import 'package:stagess_common/models/generic/photo.dart';
@@ -7,7 +6,6 @@ import 'package:stagess_common/models/generic/serializable_elements.dart';
 import 'package:stagess_common/services/job_data_file_service.dart';
 
 part 'package:stagess_common/models/enterprises/incidents.dart';
-part 'package:stagess_common/models/enterprises/pre_internship_requests.dart';
 
 class Job extends ItemSerializable {
   static final String _currentVersion = '1.0.0';
@@ -29,10 +27,6 @@ class Job extends ItemSerializable {
   // Positions offered by school
   final Map<String, int> positionsOffered;
 
-  // Prerequisites for an internship
-  final int minimumAge;
-  final PreInternshipRequests preInternshipRequests;
-
   // Photos
   final List<Photo> photos;
 
@@ -46,8 +40,6 @@ class Job extends ItemSerializable {
     super.id,
     required Specialization? specialization,
     required this.positionsOffered,
-    required this.minimumAge,
-    required this.preInternshipRequests,
     List<Photo>? photos,
     required this.incidents,
     List<JobComment>? comments,
@@ -60,8 +52,6 @@ class Job extends ItemSerializable {
     String? id,
     Specialization? specialization,
     Map<String, int>? positionsOffered,
-    int? minimumAge,
-    PreInternshipRequests? preInternshipRequests,
     List<Photo>? photos,
     Incidents? incidents,
     List<JobComment>? comments,
@@ -71,10 +61,6 @@ class Job extends ItemSerializable {
       id: id ?? this.id,
       specialization: specialization ?? _specialization,
       positionsOffered: positionsOffered ?? this.positionsOffered,
-      minimumAge: minimumAge ?? this.minimumAge,
-      preInternshipRequests:
-          preInternshipRequests?.copyWith(id: this.preInternshipRequests.id) ??
-              this.preInternshipRequests,
       photos: photos ?? this.photos,
       incidents: incidents ?? this.incidents,
       comments: comments ?? this.comments,
@@ -92,9 +78,6 @@ class Job extends ItemSerializable {
       positionsOffered: MapExt.from<String, int>(map['positions_offered'],
               deserializer: (e) => e) ??
           positionsOffered,
-      minimumAge: IntExt.from(map['minimum_age']) ?? minimumAge,
-      preInternshipRequests: PreInternshipRequests.fromSerialized(
-          map['pre_internship_requests'] ?? {}, map['version'] ?? '1.0.0'),
       photos: ListExt.from(map['photos'],
               deserializer: (e) => Photo.fromSerialized(e)) ??
           photos,
@@ -112,8 +95,6 @@ class Job extends ItemSerializable {
     return Job(
       specialization: null,
       positionsOffered: {},
-      minimumAge: 0,
-      preInternshipRequests: PreInternshipRequests.empty,
       photos: [],
       incidents: Incidents.empty,
       comments: [],
@@ -127,8 +108,6 @@ class Job extends ItemSerializable {
         'version': _currentVersion.serialize(),
         'specialization_id': specialization.id.serialize(),
         'positions_offered': positionsOffered.serialize(),
-        'minimum_age': minimumAge.serialize(),
-        'pre_internship_requests': preInternshipRequests.serialize(),
         'photos': photos.serialize(),
         'incidents': incidents.serialize(),
         'comments': comments.serialize(),
@@ -140,8 +119,6 @@ class Job extends ItemSerializable {
         'specialization_id': FetchableFields.mandatory,
         'positions_offered': FetchableFields.mandatory
           ..addAll(FetchableFields.reference({'*': FetchableFields.mandatory})),
-        'minimum_age': FetchableFields.optional,
-        'pre_internship_requests': PreInternshipRequests.fetchableFields,
         'photos': FetchableFields.optional,
         'incidents': Incidents.fetchableFields,
         'comments': FetchableFields.optional,
@@ -154,9 +131,6 @@ class Job extends ItemSerializable {
         positionsOffered = MapExt.from<String, int>(map?['positions_offered'],
                 deserializer: (e) => e) ??
             {},
-        minimumAge = IntExt.from(map?['minimum_age']) ?? 0,
-        preInternshipRequests = PreInternshipRequests.fromSerialized(
-            map?['pre_internship_requests'] ?? {}, map?['version'] ?? '1.0.0'),
         photos = ListExt.from(map?['photos'],
                 deserializer: (e) => Photo.fromSerialized(e)) ??
             [],
@@ -174,8 +148,6 @@ class Job extends ItemSerializable {
   String toString() {
     return 'Job(positionsOffered: $positionsOffered, '
         'specialization: $specialization, '
-        'minimumAge: $minimumAge, '
-        'preInternshipRequests: $preInternshipRequests, '
         'photos: $photos, '
         'comments: $comments, '
         'incidents: $incidents)';

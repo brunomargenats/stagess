@@ -10,7 +10,6 @@ import 'package:stagess_common/models/enterprises/job.dart';
 import 'package:stagess_common/models/generic/access_level.dart';
 import 'package:stagess_common/models/persons/teacher.dart';
 import 'package:stagess_common/services/job_data_file_service.dart';
-import 'package:stagess_common/utils.dart';
 import 'package:stagess_common_flutter/helpers/enterprise_extension.dart';
 import 'package:stagess_common_flutter/helpers/job_extension.dart';
 import 'package:stagess_common_flutter/providers/auth_provider.dart';
@@ -18,12 +17,10 @@ import 'package:stagess_common_flutter/providers/enterprises_provider.dart';
 import 'package:stagess_common_flutter/providers/school_boards_provider.dart';
 import 'package:stagess_common_flutter/providers/teachers_provider.dart';
 import 'package:stagess_common_flutter/widgets/animated_expanding_card.dart';
-import 'package:stagess_common_flutter/widgets/checkbox_with_other.dart';
 import 'package:stagess_common_flutter/widgets/confirm_exit_dialog.dart';
 import 'package:stagess_common_flutter/widgets/incidents_expansion_panel.dart';
 import 'package:stagess_common_flutter/widgets/jobs_expansion_panels/comments_expansion_panel.dart';
 import 'package:stagess_common_flutter/widgets/jobs_expansion_panels/photo_expansion_panel.dart';
-import 'package:stagess_common_flutter/widgets/jobs_expansion_panels/prerequisites_expansion_panel.dart';
 import 'package:stagess_common_flutter/widgets/jobs_expansion_panels/supervision_expansion_panel.dart';
 import 'package:stagess_common_flutter/widgets/show_snackbar.dart';
 import 'package:stagess_common_flutter/widgets/sub_title.dart';
@@ -48,17 +45,13 @@ class JobsPage extends StatefulWidget {
 class JobsPageState extends State<JobsPage> {
   final Map<String, GlobalKey<FormState>> _formKeys = {};
   final Map<String, UniqueKey> _cardKey = {};
-  final Map<String, GlobalKey<PrerequisitesExpansionPanelState>>
-      _prerequisitesFormKeys = {};
-  final Map<String, bool> _isEditingPrerequisites = {};
 
   bool _forceDisabled = false;
-  bool get isEditing => _isEditingPrerequisites.containsValue(true);
+
+  bool get isEditing => _forceDisabled;
+
   void cancelEditing() {
     _logger.info('Canceling editing in JobsPage');
-    for (final e in _isEditingPrerequisites.keys) {
-      _isEditingPrerequisites[e] = false;
-    }
     EnterprisesProvider.of(
       context,
       listen: false,
@@ -141,71 +134,7 @@ class JobsPageState extends State<JobsPage> {
     for (Job job in widget.enterprise.jobs) {
       _formKeys.putIfAbsent(job.id, () => GlobalKey<FormState>());
       _cardKey.putIfAbsent(job.id, () => UniqueKey());
-      _prerequisitesFormKeys.putIfAbsent(
-        job.id,
-        () => GlobalKey<PrerequisitesExpansionPanelState>(),
-      );
-      _isEditingPrerequisites.putIfAbsent(job.id, () => false);
     }
-  }
-
-  Future<void> _onClickPrerequisiteEdit(Job job) async {
-    if (_forceDisabled) return;
-    setState(() {
-      _forceDisabled = true;
-    });
-
-    // If we have to validate something before switching
-    final enterprises = EnterprisesProvider.of(context, listen: false);
-    if (_isEditingPrerequisites[job.id]!) {
-      if (!(_formKeys[job.id]?.currentState?.validate() ?? false)) {
-        setState(() {
-          _forceDisabled = false;
-        });
-        return;
-      }
-
-      final newJob = job.copyWith(
-        minimumAge: _prerequisitesFormKeys[job.id]!.currentState!.minimumAge,
-        preInternshipRequests: PreInternshipRequests.fromStrings(
-            _prerequisitesFormKeys[job.id]!.currentState!.prerequisites,
-            notApplicableTag: CheckboxWithOther.notApplicableTag),
-      );
-      bool isSuccess = true;
-      if (job.getDifference(newJob).isNotEmpty) {
-        widget.enterprise.jobs.replace(newJob);
-        isSuccess =
-            await enterprises.replaceWithConfirmation(widget.enterprise);
-      }
-      await enterprises.releaseLockForItem(widget.enterprise);
-
-      if (mounted) {
-        showSnackBar(context,
-            message: isSuccess
-                ? 'Les informations ont été sauvegardées'
-                : 'Une erreur est survenue lors de la sauvegarde des informations');
-      }
-    } else {
-      final isSuccess = await enterprises.getLockForItem(widget.enterprise);
-      if (!isSuccess) {
-        if (mounted) {
-          showSnackBar(
-            context,
-            message:
-                'Impossible de modifier le poste, car celui-ci est en cours de modification par un autre utilisateur.',
-          );
-        }
-        setState(() {
-          _forceDisabled = false;
-        });
-        return;
-      }
-    }
-
-    _isEditingPrerequisites[job.id] = !_isEditingPrerequisites[job.id]!;
-    setState(() {
-      _forceDisabled = false;
-    });
   }
 
   @override
@@ -344,18 +273,6 @@ class JobsPageState extends State<JobsPage> {
 
   Widget _buildJobCardBody({required Job job}) {
     return Column(children: [
-      Padding(
-        padding: const EdgeInsets.only(bottom: 4.0),
-        child: PrerequisitesExpansionPanel(
-          key: _prerequisitesFormKeys[job.id]!,
-          isEditing: _isEditingPrerequisites[job.id]!,
-          enterprise: widget.enterprise,
-          job: job,
-          onClickSave: () => _onClickPrerequisiteEdit(job),
-          onClickCancel: cancelEditing,
-        ),
-      ),
-      Divider(height: 4.0, indent: 4.0, endIndent: 24.0),
       Padding(
         padding: const EdgeInsets.only(bottom: 4.0),
         child: IncidentsExpansionPanel(

@@ -224,10 +224,6 @@ class InternshipContractFormController {
 
   void dispose() {
     _studentController.dispose();
-    _primaryJobController.dispose();
-    for (final controller in _extraJobControllers) {
-      controller.dispose();
-    }
     _superviserFirstNameController.dispose();
     _supervisorLastNameController.dispose();
     _supervisorPhoneController.dispose();

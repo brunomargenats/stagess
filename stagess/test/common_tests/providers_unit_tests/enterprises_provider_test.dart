@@ -41,7 +41,6 @@ void main() {
       );
 
       final enterprise = enterprises[0];
-      expect(enterprise.jobs[0].minimumAge, 12);
     });
 
     test('"deserializeItem" works', () {
