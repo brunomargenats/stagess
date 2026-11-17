@@ -106,7 +106,7 @@ class Job extends ItemSerializable {
   Map<String, dynamic> serializedMap() => {
         'id': id.serialize(),
         'version': _currentVersion.serialize(),
-        'specialization_id': specialization.id.serialize(),
+        'specialization_id': _specialization?.id.serialize(),
         'positions_offered': positionsOffered.serialize(),
         'photos': photos.serialize(),
         'incidents': incidents.serialize(),

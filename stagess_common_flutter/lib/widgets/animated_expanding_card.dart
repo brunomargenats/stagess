@@ -48,6 +48,12 @@ class _AnimatedExpandingCardState extends State<AnimatedExpandingCard>
     }
   }
 
+  @override
+  void dispose() {
+    _expandingAnimationController.dispose();
+    super.dispose();
+  }
+
   bool _isAnimating = false;
 
   void _trackIsAnimating() async {
