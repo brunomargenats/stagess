@@ -277,14 +277,17 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
                   if (widget.showExtended)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: AnimatedExpandingCard(
-                          elevation: 0.0,
-                          header: (context, isExpanded) => Text(
-                              isExpanded
-                                  ? 'Moins de détails sur le métier...'
-                                  : 'Plus de détails sur le métier...',
-                              style: Theme.of(context).textTheme.titleMedium),
-                          child: _buildMoreDetails()),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Détails du métier',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMoreDetails(),
+                        ],
+                      ),
                     ),
                   const SizedBox(height: 12),
                 ],
