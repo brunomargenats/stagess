@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:stagess_common/models/enterprises/enterprise_status.dart';
 import 'package:stagess_common/models/enterprises/job.dart';
 import 'package:stagess_common/models/generic/access_level.dart';
@@ -168,6 +167,12 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
         ) ??
         [];
 
+    final showJobPicker = widget.showJobNameTitle ||
+        (widget.editMode && widget.controller._specialization == null);
+    final showEditModeDetailsPlaceholder = widget.editMode &&
+        widget.controller._specialization != null &&
+        !widget.showExtended;
+
     return AnimatedExpandingCard(
       elevation: widget.elevation,
       canChangeExpandedState: widget.canChangeExpandedState,
@@ -184,7 +189,7 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
                       Flexible(
                         child: Text(
                           widget.controller._specialization?.idWithName ??
-                              'Aucun métier sélectionné',
+                              'Aucun métier sélectionné (Veuillez sélectionner un plus bas)',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
@@ -233,7 +238,7 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.showJobNameTitle)
+            if (showJobPicker)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: _buildJobPicker(),
@@ -245,6 +250,13 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                   ),
+                  if (showEditModeDetailsPlaceholder)
+                    Text(
+                      '*Les détails du métier seront affichés ici*',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontStyle: FontStyle.italic,
+                          ),
+                    ),
                   const SizedBox(height: 8),
                   if (!widget.showHeader)
                     Column(
@@ -296,14 +308,22 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
   Autocomplete<Specialization> _buildJobPicker() {
     return Autocomplete<Specialization>(
       displayStringForOption: (specialization) => specialization.idWithName,
-      optionsBuilder: (textEditingValue) => _availableSpecialization
-          .where(
-            (s) => s.idWithName.toLowerCase().contains(
-                  textEditingValue.text.toLowerCase().trim(),
-                ),
-          )
-          .sorted((a, b) => a.name.compareTo(b.name))
-          .toList(),
+      optionsBuilder: (textEditingValue) {
+        final text = textEditingValue.text.trim();
+
+        // Suggestions are computed here; selection state should not be mutated,
+        // otherwise the parent widget rebuilds while the dropdown is opening and
+        // Enter/click selection becomes inconsistent.
+        if (text.isEmpty) return _availableSpecialization;
+
+        final normalizedText = text.toLowerCase();
+        return _availableSpecialization
+            .where(
+              (s) => s.idWithName.toLowerCase().contains(normalizedText) &&
+                  s.idWithName.toLowerCase() != normalizedText,
+            )
+            .toList();
+      },
       optionsViewBuilder: (context, onSelected, options) =>
           OptionsBuilderForAutocomplete(
         onSelected: onSelected,
@@ -311,9 +331,9 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
         optionToString: (Specialization e) => e.idWithName,
       ),
       onSelected: (specialization) {
-        FocusManager.instance.primaryFocus?.unfocus();
         widget.controller._specialization = specialization;
         setState(() {});
+        // Don't need to unfocus here - the Focus widget will handle validation on blur
       },
       initialValue: TextEditingValue(
         text: widget.controller._specialization?.idWithName ?? '',
@@ -323,39 +343,71 @@ class _EnterpriseJobListTileState extends State<EnterpriseJobListTile> {
           widget.controller._specialization = _availableSpecialization[0];
           controller.text = widget.controller._specialization!.idWithName;
         }
-        return TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          validator: (value) {
-            if (widget.controller._specialization == null) {
-              return 'Sélectionner un métier.';
-            }
-            if (widget.controller._specializationBlacklist?.contains(
-                  widget.controller._specialization,
-                ) ??
-                false) {
-              return 'Ce métier existe déjà pour cette entreprise.';
-            }
-            return null;
+
+        void commitSelectionFromText(String? rawText) {
+          final matchedSpecialization = _availableSpecialization.firstWhereOrNull(
+            (specialization) =>
+                specialization.idWithName.trim().toLowerCase() ==
+                (rawText?.trim().toLowerCase() ?? ''),
+          );
+          if (matchedSpecialization == null) {
+            widget.controller._specialization = null;
+            setState(() {});
+            return;
+          }
+
+          widget.controller._specialization = matchedSpecialization;
+          setState(() {});
+        }
+
+        return Focus(
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) commitSelectionFromText(controller.text);
           },
-          style: const TextStyle(color: Colors.black),
-          enabled: widget.editMode &&
-              _availableSpecialization.length != 1 &&
-              widget.canChangeSpecialization,
-          decoration: InputDecoration(
-            labelText: '* Métier semi-spécialisé',
-            labelStyle: TextStyle(color: Colors.black),
-            hintText: 'Saisir nom ou n° de métier',
-            suffixIcon: _availableSpecialization.length == 1
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      if (focusNode.hasFocus) focusNode.nextFocus();
-                      widget.controller._specialization = null;
-                      controller.clear();
-                    },
-                  ),
+          child: TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            readOnly: false,
+            enabled: widget.editMode &&
+                _availableSpecialization.length != 1 &&
+                widget.canChangeSpecialization,
+            style: const TextStyle(color: Colors.black),
+            autovalidateMode: AutovalidateMode.onUnfocus,
+            onFieldSubmitted: (_) => onSubmitted(),
+            validator: (value) {
+              if (widget.controller._specialization == null) {
+                return 'Sélectionner un métier.';
+              }
+              if (widget.controller._specializationBlacklist?.contains(
+                    widget.controller._specialization,
+                  ) ??
+                  false) {
+                return 'Ce métier existe déjà pour cette entreprise.';
+              }
+
+              return validateExactAutocompleteOption<Specialization>(
+                value: value,
+                options: _availableSpecialization,
+                optionToString: (specialization) => specialization.idWithName,
+                errorMessage: 'Sélectionner un métier.',
+              );
+            },
+            decoration: InputDecoration(
+              labelText: '* Métier semi-spécialisé',
+              labelStyle: const TextStyle(color: Colors.black),
+              hintText: 'Saisir nom ou n° de métier',
+              suffixIcon: _availableSpecialization.length == 1
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        if (focusNode.hasFocus) focusNode.previousFocus();
+                        widget.controller._specialization = null;
+                        controller.clear();
+                        setState(() {});
+                      },
+                    ),
+            ),
           ),
         );
       },

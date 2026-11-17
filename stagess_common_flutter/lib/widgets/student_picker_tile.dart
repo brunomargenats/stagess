@@ -133,7 +133,7 @@ class StudentPickerTile extends StatelessWidget {
             readOnly: false,
             enabled: editMode,
             style: const TextStyle(color: Colors.black),
-            autovalidateMode: AutovalidateMode.onUserInteraction,
+            autovalidateMode: AutovalidateMode.onUnfocus,
             onFieldSubmitted: (_) => onSubmitted(),
             validator: (value) {
               if (isMandatory && (value?.trim().isEmpty ?? true)) {
