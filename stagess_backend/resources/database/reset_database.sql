@@ -422,7 +422,6 @@ CREATE TABLE enterprise_jobs(
     version VARCHAR(36) NOT NULL,
     enterprise_id VARCHAR(36) NOT NULL,
     specialization_id VARCHAR(36) NOT NULL,
-    minimum_age INT NOT NULL,
     reserved_for_id VARCHAR(36),
     FOREIGN KEY (enterprise_id) REFERENCES enterprises(id) ON DELETE CASCADE,
     FOREIGN KEY (reserved_for_id) REFERENCES entities(shared_id) ON DELETE SET NULL

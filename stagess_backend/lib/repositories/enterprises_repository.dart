@@ -183,8 +183,14 @@ abstract class EnterprisesRepository extends RepositoryAbstract {
             }
 
             if (differences.contains('specialization_id')) {
-              throw InvalidRequestException(
-                  'Cannot update the specialization of a job');
+              if (user.accessLevel < AccessLevel.schoolAdmin) {
+                throw InvalidRequestException(
+                    'You do not have permission to update the specialization of a job');
+              }
+              if (previousJob.specializationOrNull != null) {
+                throw InvalidRequestException(
+                    'Cannot update the specialization of a job');
+              }
             }
 
             if (differencesNoId.contains('comments')) {
@@ -690,14 +696,32 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
   }
 
   Future<void> _insertToEnterprisesJob(String enterpriseId, Job job) async {
-    await sqlInterface.performInsertQuery(tableName: 'enterprise_jobs', data: {
+    final baseData = {
       'id': job.id.serialize(),
       'version': Job.currentVersion.serialize(),
       'enterprise_id': enterpriseId.serialize(),
       'specialization_id': job.specialization.id.serialize(),
       'reserved_for_id':
           job.reservedForId.isEmpty ? null : job.reservedForId.serialize(),
-    });
+    };
+  // Ensure the base data is correctly set before inserting the job. This is needed to handle cases where the 'minimum_age' column might not exist in the database.
+    try {
+      await sqlInterface
+          .performInsertQuery(tableName: 'enterprise_jobs', data: {
+        ...baseData,
+        'minimum_age': 0,
+      });
+    } on DatabaseFailureException catch (e) {
+      final error = e.toString().toLowerCase();
+      if (error.contains('minimum_age') && error.contains('(1054)')) {
+        await sqlInterface.performInsertQuery(
+          tableName: 'enterprise_jobs',
+          data: baseData,
+        );
+      } else {
+        rethrow;
+      }
+    }
 
     final toWait = <Future>[];
     toWait
