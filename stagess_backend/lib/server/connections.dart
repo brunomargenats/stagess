@@ -181,7 +181,7 @@ class Connections {
               id: protocol?.id,
               field: protocol?.field,
               requestType: RequestType.response,
-              data: {'error': e.toString()},
+              data: {'error': 'Invalid request'},
               response: Response.failure));
     } catch (e, st) {
       if (!skipLog) {

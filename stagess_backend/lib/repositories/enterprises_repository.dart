@@ -704,24 +704,6 @@ class MySqlEnterprisesRepository extends EnterprisesRepository {
       'reserved_for_id':
           job.reservedForId.isEmpty ? null : job.reservedForId.serialize(),
     };
-  // Ensure the base data is correctly set before inserting the job. This is needed to handle cases where the 'minimum_age' column might not exist in the database.
-    try {
-      await sqlInterface
-          .performInsertQuery(tableName: 'enterprise_jobs', data: {
-        ...baseData,
-        'minimum_age': 0,
-      });
-    } on DatabaseFailureException catch (e) {
-      final error = e.toString().toLowerCase();
-      if (error.contains('minimum_age') && error.contains('(1054)')) {
-        await sqlInterface.performInsertQuery(
-          tableName: 'enterprise_jobs',
-          data: baseData,
-        );
-      } else {
-        rethrow;
-      }
-    }
 
     final toWait = <Future>[];
     toWait
